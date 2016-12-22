@@ -1,6 +1,3 @@
-import javafx.util.Pair;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
-
 import java.io.*;
 import java.util.*;
 
@@ -10,35 +7,44 @@ import java.util.*;
 
 public class Extractor {
 
-    public static void main(String[] args) {
+    private String dataDirectory = "";
+    private String sentrixIdFile = "";
+    private String dataMappingFile = "";
+    private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
+    private File dataDir;
+    private List<File> fileList = new ArrayList<>();
 
-        String dataDirectory = "";
-        String sentrixIdFile = "";
-        String dataMappingFile = "";
+    public Extractor(String _dataDirectory, String _sentrixIdFile, String _dataMappingFile) {
+        dataDirectory = _dataDirectory;
+        sentrixIdFile = _sentrixIdFile;
+        dataMappingFile = _dataMappingFile;
+        dataDir = new File(dataDirectory);
+    }
 
-        try {
-            dataDirectory = args[0];
-            sentrixIdFile = args[1];
-            dataMappingFile = args[2];
-        } catch (ArrayIndexOutOfBoundsException ex) {
-            System.out.println("Missing arguments");
-            System.exit(1);
-        }
+    public void run(Utils.ProcessMode processMode) {
 
-        File dataDir = new File(dataDirectory);
-        List<File> fileList = new ArrayList<>();
-        HashMap<String, Pair<Long, String>> refList = new HashMap<>();
-        List<Integer> participantList = new ArrayList<>(); // this should be an input
-        HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
+        // Read and store the data mapping information in memory
+        getMappingInfo();
 
+        // Get file name information
+        getFileNameInfo();
+
+        //printDataInfoItems(referenceList);
+
+        // Get list of files to go through
+        getFileList();
+
+        processFileList(processMode);
+    }
+
+
+    private void getMappingInfo() {
         BufferedReader inDataReader;
-        String linePrefix;
         String line;
         String[] lineParts;
 
-        // Read and store the data mapping information in memory
         try {
-             inDataReader = new BufferedReader(new FileReader(dataMappingFile));
+            inDataReader = new BufferedReader(new FileReader(dataMappingFile));
 
             while ((line = inDataReader.readLine()) != null) {
                 try {
@@ -53,15 +59,15 @@ public class Extractor {
             printAndAbort(e);
         }
 
-        /*
-        DataItemInfo d;
-        for (String key : referenceList.keySet()) {
-            d = referenceList.get(key);
-            System.out.println(String.join(" | ", new String[] {d.getSampleBarcode(), d.getParticipantId().toString(), d.getRID().toString() }));
-        }
-        */
+        System.out.println(String.format("Reference list contains %d participants", referenceList.size()));
+    }
 
-        // Get file name information
+    private void getFileNameInfo() {
+        BufferedReader inDataReader;
+        String line;
+        String[] lineParts;
+        String linePrefix;
+
         try {
             inDataReader = new BufferedReader(new FileReader(sentrixIdFile));
             String currentFilename;
@@ -70,7 +76,7 @@ public class Extractor {
             while ((line = inDataReader.readLine()) != null) {
                 try {
                     linePrefix = line.substring(0, 3);
-                    if (!linePrefix.equals("CEP") || !linePrefix.equals("Sam")) {
+                    if (!linePrefix.equals("CEP") && !linePrefix.equals("Sam")) {
                         lineParts = line.split("\t");
                         if (lineParts[1].equals("X")) { continue; } // Skip rows where the exclude flag is checked
 
@@ -84,16 +90,15 @@ public class Extractor {
                         //refList.put(lineParts[0].split("_")[1].replace(".1",""), new Pair(Long.parseLong(lineParts[2]), lineParts[3]));
                     }
                 } catch (Exception e) {
-                    System.out.println("Exception: " + e.getClass() + " :: " + e.getMessage());
+                    printAndAbort(e);
                 }
             }
         } catch (IOException e) {
             printAndAbort(e);
         }
+    }
 
-        printDataInfoItems(referenceList);
-
-        // Build file list
+    private void getFileList() {
         for (File f : dataDir.listFiles()) {
             if (f.isDirectory()) {
                 for (File subf : f.listFiles()) {
@@ -105,14 +110,10 @@ public class Extractor {
                 fileList.add(f);
         }
 
-        System.out.println(String.format("Found %d files", fileList.size()));
+        System.out.println(String.format("Found %d files in given directory", fileList.size()));
+    }
 
-        /*
-        for (File f : fileList) {
-            System.out.println(f.getName());
-        }
-        */
-
+    private void processFileList(Utils.ProcessMode mode) {
         int foundCount = 0;
         int notFoundCount = 0;
         DataItemInfo dii;
@@ -122,6 +123,10 @@ public class Extractor {
             for (File file : fileList) {
                 if (file.getName().contains(dii.getFilenameIdentifier())) {
                     //System.out.println(String.format("Extract file: %s", file.getName()));
+
+                    // TODO: extract or delete depending on mode
+                    handleFile(file, mode);
+
                     foundCount++;
                 } else {
                     //System.out.println(String.format("Failed to find file using identifier: %s", dii.getFilenameIdentifier()));
@@ -132,7 +137,17 @@ public class Extractor {
 
         System.out.println(String.format("%d files extracted", foundCount));
         System.out.println(String.format("%d files not found", notFoundCount));
+    }
 
+    private void handleFile(File file, Utils.ProcessMode mode) {
+        switch (mode) {
+            case EXTRACT:
+
+                break;
+
+            case DELETE:
+                break;
+        }
     }
 
     static void printAndAbort(Exception e) {
@@ -149,4 +164,5 @@ public class Extractor {
 
         System.out.println(String.format("%d items in total", referenceList.size()));
     }
+
 }

@@ -1,6 +1,6 @@
 .idea/
-Config/Datamapping.csv
-Config/SentrixIDs/*
+Mappingdata/Datamapping.csv
+Mappingdata/SentrixIDs/*
 out/
 *.iml
 *.idat

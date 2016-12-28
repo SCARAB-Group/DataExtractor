@@ -1,5 +1,4 @@
 import java.io.*;
-import java.net.URI;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -13,19 +12,17 @@ public class Extractor {
     private UI ui;
     private final String MAPPING_FILE = "Datamapping.csv";
     private final String SENTRIX_ID_FOLDER = "SentrixIDs";
-    private final String CONFIG_FOLDER = "Config/";
     private String dataExtractionId = "";
     private File outputFolder;
-    private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private File dataDir;
     private File mappingDataDir;
+    private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private List<File> fileList = new ArrayList<>();
     private List<Integer> participantIds;
 
-    Extractor(UI _ui, String _dataDirectory, String _dataExtractionId, String _participantListFilePath) {
+    Extractor(UI _ui, String _dataExtractionId, String _mappingDataDir, String _dataDirectory,
+              String _participantListFilePath) {
         ui = _ui;
-        mappingDataDir = new File(CONFIG_FOLDER);
-        dataDir = new File(_dataDirectory);
         if (_dataExtractionId != null) {
             dataExtractionId = _dataExtractionId.replaceAll(" ", "_");
         } else {
@@ -33,7 +30,9 @@ public class Extractor {
             dataExtractionId = String.format("%s%s%s%s%s%s", now.getYear(), now.getMonthValue(),
                     now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
         }
+        dataDir = new File(_dataDirectory);
         participantIds = createparticipandIdList(_participantListFilePath);
+        mappingDataDir = new File(_mappingDataDir);
     }
 
     void run(Utils.ProcessMode processMode) {

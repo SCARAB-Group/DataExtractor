@@ -3,10 +3,11 @@
  */
 public abstract class UI {
     Extractor extractor;
-    String dataDirectory = "";
+    String dataDirectory;
     Utils.ProcessMode processMode;
-    String dataExtractionId = "";
-    String participantListFilePath = "";
+    String dataExtractionId;
+    String participantListFilePath;
+    String mappingDataDirectory;
 
     public abstract void initialize(String[] args);
 

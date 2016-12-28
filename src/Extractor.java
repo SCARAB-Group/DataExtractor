@@ -1,8 +1,6 @@
 import java.io.*;
-import java.nio.file.CopyOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.net.URI;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -13,22 +11,21 @@ import java.util.*;
 public class Extractor {
 
     private UI ui;
-    private String dataDirectory = "";
-    private String sentrixIdFile = "";
-    private String dataMappingFile = "";
+    private final String MAPPING_FILE = "Datamapping.csv";
+    private final String SENTRIX_ID_FOLDER = "SentrixIDs";
+    private final String CONFIG_FOLDER = "Config/";
     private String dataExtractionId = "";
     private File outputFolder;
     private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private File dataDir;
+    private File mappingDataDir;
     private List<File> fileList = new ArrayList<>();
+    private List<Integer> participantIds;
 
-    public Extractor(UI _ui, String _dataDirectory, String _sentrixIdFile, String _dataMappingFile,
-                     String _dataExtractionId) {
+    Extractor(UI _ui, String _dataDirectory, String _dataExtractionId, String _participantListFilePath) {
         ui = _ui;
-        dataDirectory = _dataDirectory;
-        sentrixIdFile = _sentrixIdFile;
-        dataMappingFile = _dataMappingFile;
-        dataDir = new File(dataDirectory);
+        mappingDataDir = new File(CONFIG_FOLDER);
+        dataDir = new File(_dataDirectory);
         if (_dataExtractionId != null) {
             dataExtractionId = _dataExtractionId.replaceAll(" ", "_");
         } else {
@@ -36,9 +33,10 @@ public class Extractor {
             dataExtractionId = String.format("%s%s%s%s%s%s", now.getYear(), now.getMonthValue(),
                     now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
         }
+        participantIds = createparticipandIdList(_participantListFilePath);
     }
 
-    public void run(Utils.ProcessMode processMode) {
+    void run(Utils.ProcessMode processMode) {
 
         ui.printMessage(String.format("Running in mode: %s", processMode));
 
@@ -63,23 +61,31 @@ public class Extractor {
         String[] lineParts;
 
         try {
-            inDataReader = new BufferedReader(new FileReader(dataMappingFile));
+            inDataReader = new BufferedReader(new FileReader(String.join(File.separator, mappingDataDir.getAbsolutePath(), MAPPING_FILE)));
 
             while ((line = inDataReader.readLine()) != null) {
+                /*
+                    Column 0: RID
+                    Column 1: SampleId/barcode
+                    Column 2: ParticipantId
+                 */
                 try {
                     lineParts = line.split(";");
                     if (lineParts[0].equals("RID")) { continue; }
-                    referenceList.put(lineParts[1], new DataItemInfo(Integer.parseInt(lineParts[2]),
-                            Integer.parseInt(lineParts[0]), lineParts[1]));
+
+                    if (participantIds.contains(Integer.parseInt(lineParts[2]))) {
+                        referenceList.put(lineParts[1], new DataItemInfo(Integer.parseInt(lineParts[2]),
+                                Integer.parseInt(lineParts[0]), lineParts[1]));
+                    }
+
                 } catch (Exception e) {
                     printAndAbort(e);
                 }
             }
+
         } catch (IOException e) {
             printAndAbort(e);
         }
-
-        ui.printMessage(String.format("Reference list contains %d participants", referenceList.size()));
     }
 
     private void getFileNameInfo() {
@@ -89,28 +95,33 @@ public class Extractor {
         String linePrefix;
 
         try {
-            inDataReader = new BufferedReader(new FileReader(sentrixIdFile));
-            String currentFilename;
-            DataItemInfo currentDII;
+            File sentrixDir = new File(String.join(File.separator, mappingDataDir.getAbsolutePath(), SENTRIX_ID_FOLDER));
 
-            while ((line = inDataReader.readLine()) != null) {
-                try {
-                    linePrefix = line.substring(0, 3);
-                    if (!linePrefix.equals("CEP") && !linePrefix.equals("Sam")) {
-                        lineParts = line.split("\t");
-                        if (lineParts[1].equals("X")) { continue; } // Skip rows where the exclude flag is checked
+            for (File sf : sentrixDir.listFiles()) {
+                inDataReader = new BufferedReader(new FileReader(String.join(File.separator, sentrixDir.getAbsolutePath(), sf.getName())));
+                String currentFilename;
+                DataItemInfo currentDII;
 
-                        currentFilename = lineParts[0].split("_")[1].replace(".1","");
-                        currentDII = referenceList.get(currentFilename);
-                        if (currentDII != null) {
-                            currentDII.setSentrixSampleId(lineParts[0]);
-                            currentDII.setFilenameIdentifier(lineParts[2] + "_" + lineParts[3]);
+                while ((line = inDataReader.readLine()) != null) {
+                    try {
+                        linePrefix = line.substring(0, 3);
+                        if (!linePrefix.equals("CEP") && !linePrefix.equals("Sam")) {
+                            lineParts = line.split("\t");
+                            if (lineParts[1].equals("X")) { continue; } // Skip rows where the exclude flag is checked
+
+                            currentFilename = lineParts[0].split("_")[1].replace(".1","");
+                            currentDII = referenceList.get(currentFilename);
+                            if (currentDII != null) {
+                                currentDII.setSentrixSampleId(lineParts[0]);
+                                currentDII.setFilenameIdentifier(lineParts[2] + "_" + lineParts[3]);
+                            }
                         }
+                    } catch (Exception e) {
+                        printAndAbort(e);
                     }
-                } catch (Exception e) {
-                    printAndAbort(e);
                 }
             }
+
         } catch (IOException e) {
             printAndAbort(e);
         }
@@ -153,7 +164,9 @@ public class Extractor {
             }
         }
 
-        ui.printMessage(String.format("%d files (out of %d) extracted", foundCount, (foundCount + notFoundCount)));
+        ui.printMessage(String.format("Reference list contains %d participants", referenceList.size()));
+        ui.printMessage(String.format("%d files extracted", foundCount, (foundCount + notFoundCount)));
+        ui.printMessage(String.format("Total number of files (according to the Sentrix ID mapping file): %d", (foundCount + notFoundCount)));
     }
 
     private void handleFile(File file, Utils.ProcessMode mode) {
@@ -162,12 +175,11 @@ public class Extractor {
             case EXTRACT:
                 Path FROM = Paths.get(file.getAbsolutePath());
                 Path TO = Paths.get(String.join(File.separator, outputFolder.getAbsolutePath(), file.getName()));
-                CopyOption[] options = new CopyOption[]{
+                CopyOption[] options = new CopyOption[] {
                         StandardCopyOption.REPLACE_EXISTING,
                         StandardCopyOption.COPY_ATTRIBUTES
                 };
                 try {
-                    //ui.printMessage(String.format("FROM: %s, TO: %s", FROM.toAbsolutePath(), TO.toAbsolutePath()));
                     java.nio.file.Files.copy(FROM, TO, options);
                 } catch (IOException e) {
                     printAndAbort(e);
@@ -178,6 +190,21 @@ public class Extractor {
                 // TODO
                 break;
         }
+    }
+
+    private List<Integer> createparticipandIdList(String filePath) {
+        List<Integer> ids = new ArrayList<>();
+        try {
+            BufferedReader participandListReader = new BufferedReader(new FileReader(filePath));
+            String line;
+            while ((line = participandListReader.readLine()) != null) {
+                ids.add(Integer.parseInt(line));
+            }
+        } catch (Exception e) {
+            printAndAbort(e);
+        }
+
+        return ids;
     }
 
     private void printAndAbort(Exception e) {
@@ -194,5 +221,4 @@ public class Extractor {
 
         ui.printMessage(String.format("%d items in total", referenceList.size()));
     }
-
 }

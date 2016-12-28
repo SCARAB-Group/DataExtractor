@@ -2,12 +2,11 @@
  * Created by nikmal on 2016-12-28.
  */
 public abstract class UI {
-    protected Extractor extractor;
-    protected String dataDirectory = "";
-    protected String sentrixIdFile = "";
-    protected String dataMappingFile = "";
-    protected Utils.ProcessMode processMode;
-    protected String dataExtractionId = "";
+    Extractor extractor;
+    String dataDirectory = "";
+    Utils.ProcessMode processMode;
+    String dataExtractionId = "";
+    String participantListFilePath = "";
 
     public abstract void initialize(String[] args);
 

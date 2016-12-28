@@ -10,15 +10,14 @@ public class ConsoleInterface extends UI {
         try {
             processMode = Utils.getProcessMode(args[0]);
             dataDirectory = args[1];
-            sentrixIdFile = args[2];
-            dataMappingFile = args[3];
-            dataExtractionId = args[4];
+            dataExtractionId = args[2];
+            participantListFilePath = args[3];
         } catch (ArrayIndexOutOfBoundsException ex) {
             printMessage("Missing arguments");
             System.exit(1);
         }
 
-        this.extractor = new Extractor(this, dataDirectory, sentrixIdFile, dataMappingFile, dataExtractionId);
+        this.extractor = new Extractor(this, dataDirectory, dataExtractionId, participantListFilePath);
     }
 
     @Override

@@ -1,4 +1,9 @@
 import java.io.*;
+import java.nio.file.CopyOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -11,23 +16,31 @@ public class Extractor {
     private String dataDirectory = "";
     private String sentrixIdFile = "";
     private String dataMappingFile = "";
+    private String dataExtractionId = "";
+    private File outputFolder;
     private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private File dataDir;
     private List<File> fileList = new ArrayList<>();
-    private int participantsInMappingFile;
-    private int filesInGivenDir;
-    private int filesExtracted;
-    private int filesNotFound;
 
-    public Extractor(UI _ui, String _dataDirectory, String _sentrixIdFile, String _dataMappingFile) {
+    public Extractor(UI _ui, String _dataDirectory, String _sentrixIdFile, String _dataMappingFile,
+                     String _dataExtractionId) {
         ui = _ui;
         dataDirectory = _dataDirectory;
         sentrixIdFile = _sentrixIdFile;
         dataMappingFile = _dataMappingFile;
         dataDir = new File(dataDirectory);
+        if (_dataExtractionId != null) {
+            dataExtractionId = _dataExtractionId.replaceAll(" ", "_");
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            dataExtractionId = String.format("%s%s%s%s%s%s", now.getYear(), now.getMonthValue(),
+                    now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
+        }
     }
 
     public void run(Utils.ProcessMode processMode) {
+
+        ui.printMessage(String.format("Running in mode: %s", processMode));
 
         // Read and store the data mapping information in memory
         getMappingInfo();
@@ -56,7 +69,8 @@ public class Extractor {
                 try {
                     lineParts = line.split(";");
                     if (lineParts[0].equals("RID")) { continue; }
-                    referenceList.put(lineParts[1], new DataItemInfo(Integer.parseInt(lineParts[2]), Integer.parseInt(lineParts[0]), lineParts[1]));
+                    referenceList.put(lineParts[1], new DataItemInfo(Integer.parseInt(lineParts[2]),
+                            Integer.parseInt(lineParts[0]), lineParts[1]));
                 } catch (Exception e) {
                     printAndAbort(e);
                 }
@@ -92,8 +106,6 @@ public class Extractor {
                             currentDII.setSentrixSampleId(lineParts[0]);
                             currentDII.setFilenameIdentifier(lineParts[2] + "_" + lineParts[3]);
                         }
-
-                        //refList.put(lineParts[0].split("_")[1].replace(".1",""), new Pair(Long.parseLong(lineParts[2]), lineParts[3]));
                     }
                 } catch (Exception e) {
                     printAndAbort(e);
@@ -123,35 +135,47 @@ public class Extractor {
         int foundCount = 0;
         int notFoundCount = 0;
         DataItemInfo dii;
+        outputFolder = new File(dataExtractionId);
+        if (!outputFolder.mkdir()) {
+            printAndAbort(new Exception(String.format("Unable to create folder %s", dataExtractionId)));
+        }
+
         for (String item : referenceList.keySet()) {
             dii = referenceList.get(item);
 
             for (File file : fileList) {
                 if (file.getName().contains(dii.getFilenameIdentifier())) {
-                    //System.out.println(String.format("Extract file: %s", file.getName()));
-
-                    // TODO: extract or delete depending on mode
                     handleFile(file, mode);
-
                     foundCount++;
                 } else {
-                    //System.out.println(String.format("Failed to find file using identifier: %s", dii.getFilenameIdentifier()));
                     notFoundCount++;
                 }
             }
         }
 
-        ui.printMessage(String.format("%d files extracted", foundCount));
-        ui.printMessage(String.format("%d files not found", notFoundCount));
+        ui.printMessage(String.format("%d files (out of %d) extracted", foundCount, (foundCount + notFoundCount)));
     }
 
     private void handleFile(File file, Utils.ProcessMode mode) {
+
         switch (mode) {
             case EXTRACT:
-
+                Path FROM = Paths.get(file.getAbsolutePath());
+                Path TO = Paths.get(String.join(File.separator, outputFolder.getAbsolutePath(), file.getName()));
+                CopyOption[] options = new CopyOption[]{
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.COPY_ATTRIBUTES
+                };
+                try {
+                    //ui.printMessage(String.format("FROM: %s, TO: %s", FROM.toAbsolutePath(), TO.toAbsolutePath()));
+                    java.nio.file.Files.copy(FROM, TO, options);
+                } catch (IOException e) {
+                    printAndAbort(e);
+                }
                 break;
 
             case DELETE:
+                // TODO
                 break;
         }
     }
@@ -171,12 +195,4 @@ public class Extractor {
         ui.printMessage(String.format("%d items in total", referenceList.size()));
     }
 
-    public int getParticipantsInMappingFile() { return participantsInMappingFile; }
-    public void setParticipantsInMappingFile(int participantsInMappingFile) { this.participantsInMappingFile = participantsInMappingFile; }
-    public int getFilesInGivenDir() { return filesInGivenDir; }
-    public void setFilesInGivenDir(int filesInGivenDir) { this.filesInGivenDir = filesInGivenDir; }
-    public int getFilesExtracted() { return filesExtracted; }
-    public void setFilesExtracted(int filesExtracted) { this.filesExtracted = filesExtracted; }
-    public int getFilesNotFound() { return filesNotFound; }
-    public void setFilesNotFound(int filesNotFound) { this.filesNotFound = filesNotFound; }
 }

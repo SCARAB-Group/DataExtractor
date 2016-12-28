@@ -12,12 +12,13 @@ public class ConsoleInterface extends UI {
             dataDirectory = args[1];
             sentrixIdFile = args[2];
             dataMappingFile = args[3];
+            dataExtractionId = args[4];
         } catch (ArrayIndexOutOfBoundsException ex) {
-            System.out.println("Missing arguments");
+            printMessage("Missing arguments");
             System.exit(1);
         }
 
-        this.extractor = new Extractor(this, dataDirectory, sentrixIdFile, dataMappingFile);
+        this.extractor = new Extractor(this, dataDirectory, sentrixIdFile, dataMappingFile, dataExtractionId);
     }
 
     @Override

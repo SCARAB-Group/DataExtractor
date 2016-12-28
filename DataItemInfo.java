@@ -20,8 +20,6 @@ public class DataItemInfo {
     public String getSentrixSampleId() { return sentrixSampleId; }
     public void setSentrixSampleId(String sentrixSampleId) { this.sentrixSampleId = sentrixSampleId; }
 
-    public DataItemInfo() {}
-
     public DataItemInfo(Integer _participantId, Integer _RID, String _sampleBarcode) {
         participantId = _participantId;
         RID = _RID;

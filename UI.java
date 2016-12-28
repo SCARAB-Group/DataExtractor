@@ -7,6 +7,7 @@ public abstract class UI {
     protected String sentrixIdFile = "";
     protected String dataMappingFile = "";
     protected Utils.ProcessMode processMode;
+    protected String dataExtractionId = "";
 
     public abstract void initialize(String[] args);
 

@@ -7,14 +7,20 @@ import java.util.*;
 
 public class Extractor {
 
+    private UI ui;
     private String dataDirectory = "";
     private String sentrixIdFile = "";
     private String dataMappingFile = "";
     private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private File dataDir;
     private List<File> fileList = new ArrayList<>();
+    private int participantsInMappingFile;
+    private int filesInGivenDir;
+    private int filesExtracted;
+    private int filesNotFound;
 
-    public Extractor(String _dataDirectory, String _sentrixIdFile, String _dataMappingFile) {
+    public Extractor(UI _ui, String _dataDirectory, String _sentrixIdFile, String _dataMappingFile) {
+        ui = _ui;
         dataDirectory = _dataDirectory;
         sentrixIdFile = _sentrixIdFile;
         dataMappingFile = _dataMappingFile;
@@ -59,7 +65,7 @@ public class Extractor {
             printAndAbort(e);
         }
 
-        System.out.println(String.format("Reference list contains %d participants", referenceList.size()));
+        ui.printMessage(String.format("Reference list contains %d participants", referenceList.size()));
     }
 
     private void getFileNameInfo() {
@@ -110,7 +116,7 @@ public class Extractor {
                 fileList.add(f);
         }
 
-        System.out.println(String.format("Found %d files in given directory", fileList.size()));
+        ui.printMessage(String.format("Found %d files in given directory", fileList.size()));
     }
 
     private void processFileList(Utils.ProcessMode mode) {
@@ -135,8 +141,8 @@ public class Extractor {
             }
         }
 
-        System.out.println(String.format("%d files extracted", foundCount));
-        System.out.println(String.format("%d files not found", notFoundCount));
+        ui.printMessage(String.format("%d files extracted", foundCount));
+        ui.printMessage(String.format("%d files not found", notFoundCount));
     }
 
     private void handleFile(File file, Utils.ProcessMode mode) {
@@ -150,19 +156,27 @@ public class Extractor {
         }
     }
 
-    static void printAndAbort(Exception e) {
-        System.out.println(String.format("Caught exception (%s): %s", e.getClass(), e.getMessage()));
+    private void printAndAbort(Exception e) {
+        ui.printMessage(String.format("Caught exception (%s): %s", e.getClass(), e.getMessage()));
         System.exit(-1);
     }
 
-    static void printDataInfoItems(HashMap<String, DataItemInfo> referenceList) {
+    private void printDataInfoItems(HashMap<String, DataItemInfo> referenceList) {
         DataItemInfo dii;
         for (String k : referenceList.keySet()) {
             dii = referenceList.get(k);
-            System.out.println(k + " -> " + dii.toString());
+            ui.printMessage(k + " -> " + dii.toString());
         }
 
-        System.out.println(String.format("%d items in total", referenceList.size()));
+        ui.printMessage(String.format("%d items in total", referenceList.size()));
     }
 
+    public int getParticipantsInMappingFile() { return participantsInMappingFile; }
+    public void setParticipantsInMappingFile(int participantsInMappingFile) { this.participantsInMappingFile = participantsInMappingFile; }
+    public int getFilesInGivenDir() { return filesInGivenDir; }
+    public void setFilesInGivenDir(int filesInGivenDir) { this.filesInGivenDir = filesInGivenDir; }
+    public int getFilesExtracted() { return filesExtracted; }
+    public void setFilesExtracted(int filesExtracted) { this.filesExtracted = filesExtracted; }
+    public int getFilesNotFound() { return filesNotFound; }
+    public void setFilesNotFound(int filesNotFound) { this.filesNotFound = filesNotFound; }
 }

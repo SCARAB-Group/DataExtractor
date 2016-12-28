@@ -1,0 +1,5 @@
+.idea/
+Config/Datamapping.csv
+Config/SentrixIDs/*
+out/
+*.iml

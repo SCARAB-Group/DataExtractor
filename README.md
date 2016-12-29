@@ -21,7 +21,7 @@ java -jar DataExtractor.jar C <MODE> [DATA_EXTRACTION_ID] [GENOTYPE_DATA_DIR] [M
 <br>
 For example:
 ```
-java -jar DataExtractor.jar C E C:/MyFolder/GenotypeData C:/OtherFolder/Mappingdata C:/Docs/listofparticipants.txt
+java -jar DataExtractor.jar C E DE_2016-041 C:/MyFolder/GenotypeData C:/OtherFolder/Mappingdata C:/Docs/listofparticipants.txt
 ```
 <br>
 3. Wait a few moments and the program will copy the files beloning to the participants in the supplied file to a folder name. This folder will appear in the same directory as the JAR file<br>

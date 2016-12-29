@@ -31,4 +31,9 @@ public class ConsoleInterface extends UI {
     public void printMessage(String msg) {
         System.out.println(msg);
     }
+
+    @Override
+    public void displayError(String msg) {
+        printMessage(msg);
+    }
 }

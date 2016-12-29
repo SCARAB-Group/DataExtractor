@@ -14,4 +14,6 @@ public abstract class UI {
     public abstract void start();
 
     public abstract void printMessage(String msg);
+
+    public abstract void displayError(String msg);
 }

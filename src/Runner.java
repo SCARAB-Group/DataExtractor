@@ -5,26 +5,30 @@ public class Runner {
 
     public static void main(String[] args) {
 
-        try {
+        UI ui = null;
 
-            UI ui;
-            String UIMode = args[0];
+        try {
+            String UIMode = "";
+            if (args.length > 0)
+                UIMode = args[0];
 
             switch (UIMode) {
                 case "C":
                     ui = new ConsoleInterface();
+                    ui.initialize(args);
+                    ui.start();
                     break;
-                //case "":
-                    //TODO: assign a GUI
-                //    break;
+                case "":
+                    ui = new GraphicalInterface();
+                    ui.initialize(args);
+                    //ui.start();
+                    break;
                 default:
                     throw new RuntimeException(String.format("Invalid interface option: %s", UIMode));
             }
 
-            ui.initialize(args);
-            ui.start();
-        } catch (Exception e) {
 
+        } catch (Exception e) {
             StringBuilder sb = new StringBuilder();
             sb.append("Oh snap, something crashed! Here's the message and stack trace:\n")
                     .append(e.getMessage()).append("\n");
@@ -33,7 +37,12 @@ public class Runner {
                 sb.append(elem.toString());
             }
 
-            throw new RuntimeException(sb.toString());
+            System.out.println(e.getClass().getName());
+
+            if (e.getClass().getName().equals("java.lang.RuntimeException") || ui == null) {
+                throw new RuntimeException(sb.toString());
+            }
+            ui.printMessage(sb.toString());
         }
     }
 }

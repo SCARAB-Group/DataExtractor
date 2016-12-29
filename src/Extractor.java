@@ -207,8 +207,8 @@ public class Extractor {
     }
 
     private void printAndAbort(Exception e) {
-        ui.printMessage(String.format("Caught exception (%s): %s", e.getClass(), e.getMessage()));
-        System.exit(-1);
+        ui.displayError(String.format("Caught exception (%s): %s", e.getClass(), e.getMessage()));
+        System.exit(1);
     }
 
     private void printDataInfoItems(HashMap<String, DataItemInfo> referenceList) {

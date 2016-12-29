@@ -191,7 +191,7 @@ public class GraphicalInterface extends UI {
         fields.add(participantListFilePath);
         fields.add(processMode.toString());
 
-        if (processMode.toString().equals("EXTRACT"))
+        if (processMode.toString().equals("EXTRACT")) // Data extraction Id not needed for DELETE mode
             fields.add(dataExtractionId);
 
         for (String field : fields) {
@@ -200,11 +200,6 @@ public class GraphicalInterface extends UI {
         }
 
         return true;
-
-        /*
-        return !dataExtractionId.isEmpty() && !mappingDataDirectory.isEmpty()
-                && !dataDirectory.isEmpty() && !participantListFilePath.isEmpty() && !processMode.toString().isEmpty();
-                */
     }
 
     private void setParameters() {

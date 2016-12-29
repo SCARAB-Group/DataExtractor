@@ -3,7 +3,7 @@
  */
 public class ConsoleInterface extends UI {
 
-    public ConsoleInterface() {}
+    ConsoleInterface() {}
 
     @Override
     public void initialize(String[] args) {
@@ -34,6 +34,6 @@ public class ConsoleInterface extends UI {
 
     @Override
     public void displayError(String msg) {
-        printMessage(msg);
+        printMessage(msg); // This would otherwise be a popup window.
     }
 }

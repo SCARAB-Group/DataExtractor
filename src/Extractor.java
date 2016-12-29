@@ -39,17 +39,22 @@ class Extractor {
 
         ui.printMessage(String.format("Running in mode: %s", processMode));
 
-        // Read and store the data mapping information in memory
+        /**
+            The methods getMappingInfo() and getFileNameInfo() read the information in the files located in the mapping
+            data folder. The information is put together in a HashMap that is used to translate a participant Id to a
+            file using the sample barcode as the common denominator.
+         */
+
+        // I. Read and store the data mapping information in memory.
         getMappingInfo();
 
-        // Get file name information
+        // II. Get file name information.
         getFileNameInfo();
 
-        //printDataInfoItems(referenceList);
-
-        // Get list of files to go through
+        // III. Get list of files to go through.
         getFileList();
 
+        // IV. Do stuff depending on the process mode given by the user.
         processFileList(processMode);
     }
 
@@ -62,7 +67,8 @@ class Extractor {
             inDataReader = new BufferedReader(new FileReader(String.join(File.separator, mappingDataDir.getAbsolutePath(), MAPPING_FILE)));
 
             while ((line = inDataReader.readLine()) != null) {
-                /*
+                /**
+                    File format:
                     Column 0: RID
                     Column 1: SampleId/barcode
                     Column 2: ParticipantId
@@ -92,6 +98,14 @@ class Extractor {
         String[] lineParts;
         String linePrefix;
 
+        /**
+         *  File format:
+         *  Column 0: RID
+         *  Column 1: exclude flag ("att exkludera")
+         *  Column 2: Sentrix ID (ID of the plate that held the samples)
+         *  Column 3: Sentrix position (ID of the position of the plate)
+         */
+
         try {
             File sentrixDir = new File(String.join(File.separator, mappingDataDir.getAbsolutePath(), SENTRIX_ID_FOLDER));
 
@@ -119,7 +133,6 @@ class Extractor {
                     }
                 }
             }
-
         } catch (IOException e) {
             printAndAbort(e);
         }
@@ -142,7 +155,6 @@ class Extractor {
 
     private void processFileList(Utils.ProcessMode mode) {
         int foundCount = 0;
-        int notFoundCount = 0;
         DataItemInfo dii;
 
         if (mode.equals(Utils.ProcessMode.EXTRACT)) {
@@ -159,8 +171,6 @@ class Extractor {
                 if (file.getName().contains(dii.getFilenameIdentifier())) {
                     handleFile(file, mode);
                     foundCount++;
-                } else {
-                    notFoundCount++;
                 }
             }
         }
@@ -215,15 +225,5 @@ class Extractor {
     private void printAndAbort(Exception e) {
         ui.displayError(String.format("Caught exception (%s): %s", e.getClass(), e.getMessage()));
         System.exit(1);
-    }
-
-    private void printDataInfoItems(HashMap<String, DataItemInfo> referenceList) {
-        DataItemInfo dii;
-        for (String k : referenceList.keySet()) {
-            dii = referenceList.get(k);
-            ui.printMessage(k + " -> " + dii.toString());
-        }
-
-        ui.printMessage(String.format("%d items in total", referenceList.size()));
     }
 }

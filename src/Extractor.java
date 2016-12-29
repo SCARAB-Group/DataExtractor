@@ -7,7 +7,7 @@ import java.util.*;
  * Created by nikmal on 2016-12-22.
  */
 
-public class Extractor {
+class Extractor {
 
     private UI ui;
     private final String MAPPING_FILE = "Datamapping.csv";
@@ -52,7 +52,6 @@ public class Extractor {
 
         processFileList(processMode);
     }
-
 
     private void getMappingInfo() {
         BufferedReader inDataReader;
@@ -145,9 +144,12 @@ public class Extractor {
         int foundCount = 0;
         int notFoundCount = 0;
         DataItemInfo dii;
-        outputFolder = new File(dataExtractionId);
-        if (!outputFolder.mkdir()) {
-            printAndAbort(new Exception(String.format("Unable to create folder %s", dataExtractionId)));
+
+        if (mode.equals(Utils.ProcessMode.EXTRACT)) {
+            outputFolder = new File(dataExtractionId);
+            if (!outputFolder.mkdir()) {
+                printAndAbort(new Exception(String.format("Unable to create folder %s", dataExtractionId)));
+            }
         }
 
         for (String item : referenceList.keySet()) {
@@ -163,9 +165,8 @@ public class Extractor {
             }
         }
 
+        ui.printMessage(String.format("%d files processed", foundCount));
         ui.printMessage(String.format("Reference list contains %d participants", referenceList.size()));
-        ui.printMessage(String.format("%d files extracted", foundCount, (foundCount + notFoundCount)));
-        ui.printMessage(String.format("Total number of files (according to the Sentrix ID mapping file): %d", (foundCount + notFoundCount)));
     }
 
     private void handleFile(File file, Utils.ProcessMode mode) {
@@ -180,13 +181,18 @@ public class Extractor {
                 };
                 try {
                     java.nio.file.Files.copy(FROM, TO, options);
+                    ui.printMessage(String.format("File copied: %s", file.getName()));
                 } catch (IOException e) {
                     printAndAbort(e);
                 }
                 break;
 
             case DELETE:
-                // TODO
+                if (file.delete()) {
+                    ui.printMessage(String.format("File deleted: %s", file.getName()));
+                } else {
+                    ui.printMessage(String.format("Failed to delete file: %s", file.getName()));
+                }
                 break;
         }
     }

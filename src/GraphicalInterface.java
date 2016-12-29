@@ -1,17 +1,15 @@
-import oracle.jrockit.jfr.JFR;
-
+import javax.rmi.CORBA.Util;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -87,6 +85,19 @@ public class GraphicalInterface extends UI {
         JLabel processModeLabel = new JLabel("Process mode");
         processModeLabel.setBounds(left_margin,top_margin + row_space,130,25);
         mainPanel.add(processModeLabel);
+        usrProcessMode.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (usrProcessMode.getSelectedItem().toString().equals("DELETE")) {
+                    usrDataExtId.setEnabled(false);
+                    usrDataExtId.setText("");
+                } else {
+                    usrDataExtId.setEnabled(true);
+                }
+                //printMessage("Changed to: " + usrProcessMode.getSelectedItem().toString());
+
+            }
+        });
 
         usrProcessMode.setBounds(left_margin + col1_width, top_margin + row_space, 100, component_height);
         mainPanel.add(usrProcessMode);
@@ -173,8 +184,27 @@ public class GraphicalInterface extends UI {
     }
 
     private Boolean validateInput() {
+
+        java.util.List<String> fields = new ArrayList<String>();
+        fields.add(mappingDataDirectory);
+        fields.add(dataDirectory);
+        fields.add(participantListFilePath);
+        fields.add(processMode.toString());
+
+        if (processMode.toString().equals("EXTRACT"))
+            fields.add(dataExtractionId);
+
+        for (String field : fields) {
+            if (field.isEmpty())
+                return false;
+        }
+
+        return true;
+
+        /*
         return !dataExtractionId.isEmpty() && !mappingDataDirectory.isEmpty()
                 && !dataDirectory.isEmpty() && !participantListFilePath.isEmpty() && !processMode.toString().isEmpty();
+                */
     }
 
     private void setParameters() {
@@ -223,12 +253,20 @@ public class GraphicalInterface extends UI {
     @Override
     public void start() {
         if (validateInput()) {
+            if (processMode.equals(Utils.ProcessMode.DELETE)) {
+                int dialogResult = JOptionPane.showConfirmDialog (frame, "Really go ahead and delete files?",
+                        "Warning", JOptionPane.YES_NO_OPTION);
+                if (dialogResult == JOptionPane.NO_OPTION){
+                    return;
+                }
+            }
+
             this.extractor = new Extractor(this, dataExtractionId, mappingDataDirectory, dataDirectory,
                     participantListFilePath);
             printMessage("------------------------------------");
-            printMessage(String.format("Started processing data extraction %s", dataExtractionId));
             extractor.run(processMode);
             printMessage("------------------------------------");
+
         } else {
             printMessage("Missing inputs!");
         }

@@ -19,7 +19,11 @@ java -jar DataExtractor.jar C <MODE> [DATA_EXTRACTION_ID] [GENOTYPE_DATA_DIR] [M
 [MAPPING_DATA_DIR] = Directory containing the mapping data (see "Preparations" above).<br>
 [PATH_TO_LIST_OF_PARTICIPANT_IDS] = Path to a file contaning Participant Ids, one Id per row, plain text file.<br>
 <br>
-For example: java -jar DataExtractor.jar C E C:/MyFolder/GenotypeData C:/OtherFolder/Mappingdata C:/Docs/listofparticipants.txt<br><br>
+For example:
+```
+java -jar DataExtractor.jar C E C:/MyFolder/GenotypeData C:/OtherFolder/Mappingdata C:/Docs/listofparticipants.txt
+```
+<br>
 3. Wait a few moments and the program will copy the files beloning to the participants in the supplied file to a folder name. This folder will appear in the same directory as the JAR file<br>
 
 ###As a window application:

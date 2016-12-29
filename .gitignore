@@ -4,3 +4,5 @@ Mappingdata/SentrixIDs/*
 out/
 *.iml
 *.idat
+.lastParameters
+MANIFEST.MF

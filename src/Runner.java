@@ -21,7 +21,6 @@ public class Runner {
                 case "":
                     ui = new GraphicalInterface();
                     ui.initialize(args);
-                    //ui.start();
                     break;
                 default:
                     throw new RuntimeException(String.format("Invalid interface option: %s", UIMode));

@@ -6,6 +6,13 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 /**
  * Created by nikmal on 2016-12-28.
@@ -42,6 +49,7 @@ public class GraphicalInterface extends UI {
     @Override
     public void initialize(String[] args) {
         addComponents();
+        loadParameters();
     }
 
     private void addComponents() {
@@ -124,17 +132,18 @@ public class GraphicalInterface extends UI {
 
         // last row
         JButton goButton = new JButton("GO");
-        goButton.setBounds(left_margin + 130, top_margin + 5 + row_space * 5, 80, component_height);
+        goButton.setBounds(left_margin + col1_width, top_margin + 5 + row_space * 5, 80, component_height);
         mainPanel.add(goButton);
         goButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 setParameters();
+                saveParameters();
                 start();
             }
         });
 
-        JButton clearButton = new JButton("Clear log window");
-        clearButton.setBounds(left_margin + 240, top_margin + 5 + row_space * 5, 80, component_height);
+        JButton clearButton = new JButton("Clear log");
+        clearButton.setBounds(left_margin + col1_width + 100, top_margin + 5 + row_space * 5, 85, component_height);
         mainPanel.add(clearButton);
         clearButton.addActionListener(new ActionListener() {
             @Override
@@ -174,6 +183,41 @@ public class GraphicalInterface extends UI {
         dataDirectory = usrGenotypeDataDir.getText();
         participantListFilePath = usrParticipantListFilePath.getText();
         processMode = Utils.getProcessMode(usrProcessMode.getSelectedItem().toString());
+    }
+
+    private void saveParameters() {
+        try {
+            PrintWriter writer = new PrintWriter(".lastParameters", "UTF-8");
+            writer.println("MAPPING_DIR;" + mappingDataDirectory);
+            writer.println("DATA_DIR;" + dataDirectory);
+            writer.println("PARTICIPANTLIST_DIR;" + participantListFilePath);
+            writer.close();
+        } catch (IOException e) {
+            printMessage(String.format("Unable to save parameters to disk, here's the error: %s", e.getMessage()));
+        }
+    }
+
+    private void loadParameters() {
+        try (Stream<String> stream = Files.lines(Paths.get(".lastParameters"))) {
+
+            stream.forEach((line) -> {
+                final String[] lineParts = line.split(";");
+                switch (lineParts[0]) {
+                    case "MAPPING_DIR":
+                        usrMappingDataDir.setText(lineParts[1]);
+                        break;
+                    case "DATA_DIR":
+                        usrGenotypeDataDir.setText(lineParts[1]);
+                        break;
+                    case "PARTICIPANTLIST_DIR":
+                        usrParticipantListFilePath.setText(lineParts[1]);
+                        break;
+                }
+            });
+
+        } catch (IOException e) {
+            printMessage("(No previously saved parameters found)");
+        }
     }
 
     @Override

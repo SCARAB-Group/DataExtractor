@@ -19,6 +19,7 @@ class Extractor {
     private HashMap<String, DataItemInfo> referenceList = new HashMap<>(); // Sample barcode is the key value
     private List<File> fileList = new ArrayList<>();
     private List<Integer> participantIds;
+    private PrintWriter writer;
 
     Extractor(UI _ui, String _dataExtractionId, String _mappingDataDir, String _dataDirectory,
               String _participantListFilePath) {
@@ -162,6 +163,12 @@ class Extractor {
             if (!outputFolder.mkdir()) {
                 printAndAbort(new Exception(String.format("Unable to create folder %s", dataExtractionId)));
             }
+            try {
+                writer = new PrintWriter(dataExtractionId + File.separator + dataExtractionId + "_MappingInfo.txt", "UTF-8");
+                writer.println("ParticipantId;SampleBarcode;Filename");
+            } catch (Exception e) {
+                printAndAbort(e);
+            }
         }
 
         for (String item : referenceList.keySet()) {
@@ -169,12 +176,14 @@ class Extractor {
 
             for (File file : fileList) {
                 if (file.getName().contains(dii.getFilenameIdentifier())) {
+                    writer.println(dii.getParticipantId() + ";" + dii.getSampleBarcode() + ";" + file.getName());
                     handleFile(file, mode);
                     foundCount++;
                 }
             }
         }
 
+        writer.close();
         ui.printMessage(String.format("%d files processed", foundCount));
         ui.printMessage(String.format("Reference list contains %d participants", referenceList.size()));
     }
